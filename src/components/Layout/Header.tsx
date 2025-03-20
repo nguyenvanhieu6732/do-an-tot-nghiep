@@ -4,11 +4,12 @@ import { useState, useEffect } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
-import { Search, ShoppingBag, User, Menu, X, Heart, Sun, Moon } from "lucide-react"
+import { Search, ShoppingBag, Menu, X, Heart, Sun, Moon, User, BarChart3 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { useTheme } from "next-themes"
 import { cn } from "@/lib/utils"
+import { UserButton, useUser } from "@clerk/nextjs" // Import UserButton từ Clerk
 
 const navItems = [
   { name: "Trang chủ", href: "/" },
@@ -16,6 +17,7 @@ const navItems = [
   { name: "Bộ sưu tập", href: "/collections" },
   { name: "Khuyến mãi", href: "/sale" },
   { name: "Về chúng tôi", href: "/about" },
+  { name: "Liên hệ", href: "/contact" },
 ]
 
 export default function Header() {
@@ -23,6 +25,9 @@ export default function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const pathname = usePathname()
   const { setTheme, theme } = useTheme()
+  const { isLoaded, isSignedIn, user } = useUser();
+  const [isAdmin, setIsAdmin] = useState(false);
+
 
   useEffect(() => {
     const handleScroll = () => {
@@ -32,6 +37,11 @@ export default function Header() {
     return () => window.removeEventListener("scroll", handleScroll)
   }, [])
 
+  useEffect(() => {
+    if (isLoaded && user?.publicMetadata?.role === "admin") {
+      setIsAdmin(true);
+    }
+  }, [isLoaded, user]);
   return (
     <header
       className={cn(
@@ -82,23 +92,62 @@ export default function Header() {
               <span className="sr-only">Tìm kiếm</span>
             </Button>
 
-            <Button variant="ghost" size="icon" className="hidden md:flex">
-              <Heart className="h-5 w-5" />
-              <span className="sr-only">Yêu thích</span>
-            </Button>
+            <Link href="/favorite" passHref>
+              <Button variant="ghost" size="icon" className="hidden md:flex">
+                <Heart className="h-5 w-5" />
+                <span className="sr-only">Yêu thích</span>
+              </Button>
+            </Link>
 
-            <Button variant="ghost" size="icon" className="relative">
-              <ShoppingBag className="h-5 w-5" />
-              <span className="sr-only">Giỏ hàng</span>
-              <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] font-medium text-primary-foreground">
-                3
-              </span>
-            </Button>
+            <Link href="/cart" passHref>
+              <Button variant="ghost" size="icon" className="relative">
+                <ShoppingBag className="h-5 w-5" />
+                <span className="sr-only">Giỏ hàng</span>
+                <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] font-medium text-primary-foreground">
+                  0
+                </span>
+              </Button>
+            </Link>
 
-            <Button variant="ghost" size="icon" className="hidden md:flex">
-              <User className="h-5 w-5" />
-              <span className="sr-only">Tài khoản</span>
-            </Button>
+            {!isLoaded ? (
+              <Button variant="ghost" size="icon" disabled>
+                <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-primary" />
+              </Button>
+            ) : isSignedIn ? (
+              <>{
+                isAdmin && (
+                  <Button variant="ghost" size="icon">
+                    <Link href="/admin" passHref>
+                      <BarChart3 className="h-5 w-5" />
+                    </Link>
+                    <span className="sr-only">admin</span>
+                  </Button>
+                )
+              }
+                <UserButton afterSignOutUrl="/" />
+              </>
+            ) : (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon">
+                    <User className="h-5 w-5" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <Link href="/sign-in" passHref>
+                    <DropdownMenuItem asChild>
+                      <span>Đăng nhập</span>
+                    </DropdownMenuItem>
+                  </Link>
+                  <Link href="/sign-up" passHref>
+                    <DropdownMenuItem asChild>
+                      <span>Đăng ký</span>
+                    </DropdownMenuItem>
+                  </Link>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
+
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -152,24 +201,6 @@ export default function Header() {
                   {item.name}
                 </Link>
               ))}
-              <div className="flex items-center space-x-4 pt-4 border-t">
-                <Button variant="ghost" size="icon">
-                  <Search className="h-5 w-5" />
-                  <span className="sr-only">Tìm kiếm</span>
-                </Button>
-                <Button variant="ghost" size="icon">
-                  <Heart className="h-5 w-5" />
-                  <span className="sr-only">Yêu thích</span>
-                </Button>
-                <Button variant="ghost" size="icon">
-                  <User className="h-5 w-5" />
-                  <span className="sr-only">Tài khoản</span>
-                </Button>
-                <Button variant="ghost" size="icon" onClick={() => setTheme(theme === "dark" ? "light" : "dark")}>
-                  {theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
-                  <span className="sr-only">Chuyển đổi giao diện</span>
-                </Button>
-              </div>
             </div>
           </motion.div>
         )}
@@ -177,4 +208,3 @@ export default function Header() {
     </header>
   )
 }
-
