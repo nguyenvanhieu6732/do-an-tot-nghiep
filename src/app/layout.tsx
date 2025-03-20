@@ -2,7 +2,7 @@
 
 import { ClerkProvider } from "@clerk/nextjs";
 import { useEffect, useState } from "react";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist } from "next/font/google";
 import { ThemeProvider } from "@/components/theme-provider";
 import Header from "@/components/Layout/Header";
 import Footer from "@/components/Layout/Footer";
