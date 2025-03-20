@@ -56,7 +56,7 @@ export default function HeroSection() {
     }
 
     return () => clearInterval(interval)
-  }, [current, autoplay])
+  }, [current, autoplay,nextSlide])
 
   return (
     <div className="relative h-[70vh] md:h-[80vh] overflow-hidden">
