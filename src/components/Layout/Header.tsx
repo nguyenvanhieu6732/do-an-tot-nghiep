@@ -14,7 +14,7 @@ import { UserButton, useUser } from "@clerk/nextjs" // Import UserButton từ Cl
 const navItems = [
   { name: "Trang chủ", href: "/" },
   { name: "Sản phẩm", href: "/products" },
-  { name: "Bộ sưu tập", href: "/collections" },
+  // { name: "Bộ sưu tập", href: "/collections" },
   { name: "Khuyến mãi", href: "/sale" },
   { name: "Về chúng tôi", href: "/about" },
   { name: "Liên hệ", href: "/contact" },
@@ -38,9 +38,22 @@ export default function Header() {
   }, [])
 
   useEffect(() => {
-    if (isLoaded && user?.publicMetadata?.role === "admin") {
-      setIsAdmin(true);
-    }
+    const checkAdmin = async () => {
+      if (user) {
+        const res = await fetch("/api/check-admin", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: user.emailAddresses[0].emailAddress }),
+        });
+
+        const data = await res.json();
+        if (data.isAdmin) {
+          setIsAdmin(true);
+        }
+      }
+    };
+
+    checkAdmin();
   }, [isLoaded, user]);
   return (
     <header
@@ -92,12 +105,6 @@ export default function Header() {
               <span className="sr-only">Tìm kiếm</span>
             </Button>
 
-            <Link href="/favorite" passHref>
-              <Button variant="ghost" size="icon" className="hidden md:flex">
-                <Heart className="h-5 w-5" />
-                <span className="sr-only">Yêu thích</span>
-              </Button>
-            </Link>
 
             <Link href="/cart" passHref>
               <Button variant="ghost" size="icon" className="relative">

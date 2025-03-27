@@ -7,95 +7,38 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-enum Role {
-  USER
-  ADMIN
-}
 model User {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  clerkId   String   @unique // ID từ Clerk
-  name      String?
-  role      Role     @default(USER) // Vai trò (User/Admin)
-  cart      Cart?
-  orders    Order[]
+  id        String   @id @map("_id")  // Dùng string thay vì ObjectId
+  email     String   @unique
+  firstName String?  
+  lastName  String?  
+  imageUrl  String?  
+  role      String   @default("user") // user | admin
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  orders    Order[]  @relation("UserOrders")
 }
-
 
 model Product {
-  id          String      @id @default(auto()) @map("_id") @db.ObjectId
-  name        String
-  description String?
-  details     String?
-  price       Float
-  images      String[]
-  categoryId  String      @db.ObjectId
-  category    Category    @relation(fields: [categoryId], references: [id])
-  featured    Boolean     @default(false)
-  stock       Int         @default(0)
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
-  cartItems   CartItem[]
-  orderItems  OrderItem[]
-}
-
-model Category {
-  id        String    @id @default(auto()) @map("_id") @db.ObjectId
-  name      String
-  slug      String    @unique
-  imageUrl  String?
-  products  Product[]
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-}
-
-model Cart {
-  id        String     @id @default(auto()) @map("_id") @db.ObjectId
-  userId    String?    @unique @db.ObjectId
-  user      User?      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  items     CartItem[]
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
-}
-
-model CartItem {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  cartId    String   @db.ObjectId
-  cart      Cart     @relation(fields: [cartId], references: [id], onDelete: Cascade)
-  productId String   @db.ObjectId
-  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
-  quantity  Int
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id            String    @id @default(auto()) @map("_id") @db.ObjectId
+  name          String
+  price         Float
+  stock         Int
+  description   String?
+  imageUrl      String?
+  discountPrice Float?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  orders        Order[]   @relation("ProductOrders") 
 }
 
 model Order {
-  id           String      @id @default(auto()) @map("_id") @db.ObjectId
-  orderNumber  String      @unique
-  userId       String      @db.ObjectId
-  user         User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-  items        OrderItem[]
-  subtotal     Float
-  tax          Float
-  shipping     Float
-  total        Float
-  status       String      @default("pending")
-  shippingInfo Json
-  paymentInfo  Json?
-  createdAt    DateTime    @default(now())
-  updatedAt    DateTime    @updatedAt
+  id        String    @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String    
+  user      User      @relation(fields: [userId], references: [id], name: "UserOrders")
+  productId String    
+  product   Product   @relation(fields: [productId], references: [id], name: "ProductOrders")
+  quantity  Int
+  createdAt DateTime  @default(now())
 }
 
-model OrderItem {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  orderId   String   @db.ObjectId
-  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  productId String   @db.ObjectId
-  product   Product  @relation(fields: [productId], references: [id])
-  name      String
-  price     Float
-  quantity  Int
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
