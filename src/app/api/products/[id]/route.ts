@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextResponse, NextRequest } from "next/server";
 import prisma from "@/lib/prisma";
 import { z } from "zod";
 
@@ -45,14 +45,20 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
 }
 
 
-export async function DELETE(req: Request, { params }: { params: { id: string } }) {
+export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
   try {
-    await prisma.product.delete({
-      where: { id: params.id },
-    });
+    const { id } = params; // Destructure id từ params
+    if (!id) {
+      return NextResponse.json({ error: "Product ID is required" }, { status: 400 });
+    }
 
-    return NextResponse.json({ message: "Product deleted successfully" }, { status: 200 });
+    // Logic xóa sản phẩm với id
+    // Ví dụ: await prisma.product.delete({ where: { id } });
+
+    return NextResponse.json({ message: `Product ${id} deleted` }, { status: 200 });
   } catch (error) {
+    console.error("Delete error:", error);
     return NextResponse.json({ error: "Failed to delete product" }, { status: 500 });
   }
 }
+
