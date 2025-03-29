@@ -17,7 +17,6 @@ export async function GET() {
       headers: { Authorization: `Bearer ${CLERK_SECRET_KEY}` },
     });
 
-    console.log("Clerk API Response:", response.data);
     if (response.status !== 200) throw new Error("Failed to fetch users from Clerk");
 
     const clerkUsers = Array.isArray(response.data) ? response.data : response.data.users || [];

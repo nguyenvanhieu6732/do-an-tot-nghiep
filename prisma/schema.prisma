@@ -20,12 +20,12 @@ model User {
 }
 
 model Product {
-  id            String    @id @default(auto()) @map("_id") @db.ObjectId
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
   name          String
   price         Float
   stock         Int
   description   String?
-  imageUrl      String?
+  image         Bytes?   
   discountPrice Float?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt

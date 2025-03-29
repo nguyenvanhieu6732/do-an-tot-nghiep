@@ -21,7 +21,6 @@
     "axios": "^1.8.3",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
-    "formidable": "^3.5.2",
     "framer-motion": "^12.5.0",
     "lucide-react": "^0.482.0",
     "next": "15.2.2",
@@ -31,7 +30,6 @@
     "svix": "^1.62.0",
     "tailwind-merge": "^3.0.2",
     "tailwindcss-animate": "^1.0.7",
-    "uuid": "^11.1.0",
     "zod": "^3.24.2"
   },
   "devDependencies": {
