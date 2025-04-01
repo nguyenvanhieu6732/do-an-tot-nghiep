@@ -3,6 +3,7 @@ import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Minus, Plus, ShoppingBag, Trash2 } from "lucide-react"
+import { formatPrice } from "@/lib/formatPrice"
 
 export const metadata = {
   title: "Giỏ hàng - LUXMEN",
@@ -33,14 +34,6 @@ export default function CartPage() {
       link: "/products/slim-fit-chinos",
     },
   ]
-
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat("vi-VN", {
-      style: "currency",
-      currency: "VND",
-      minimumFractionDigits: 0,
-    }).format(price)
-  }
 
   const subtotal = cartItems.reduce((total, item) => total + item.price * item.quantity, 0)
   const shipping = 30000

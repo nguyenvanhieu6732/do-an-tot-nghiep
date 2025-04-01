@@ -18,7 +18,6 @@ export async function POST(req: Request) {
 
     let imageBuffer: Buffer | undefined;
     if (validatedData.image) {
-      // Chuyển base64 thành Buffer
       const base64Data = validatedData.image.replace(/^data:image\/\w+;base64,/, "");
       imageBuffer = Buffer.from(base64Data, "base64");
     }
@@ -29,19 +28,25 @@ export async function POST(req: Request) {
         price: validatedData.price,
         stock: validatedData.stock,
         description: validatedData.description,
-        image: imageBuffer, // Lưu dữ liệu nhị phân trực tiếp
+        image: imageBuffer, // Lưu dữ liệu nhị phân
         discountPrice: validatedData.discountPrice,
       },
     });
 
-    return NextResponse.json(product, { status: 201 });
+    // Trả về sản phẩm với hình ảnh dạng base64 để frontend sử dụng ngay
+    const productWithImage = {
+      ...product,
+      image: imageBuffer ? `data:image/jpeg;base64,${imageBuffer.toString("base64")}` : null,
+    };
+
+    return NextResponse.json(productWithImage, { status: 201 });
   } catch (error) {
     console.error("POST Error:", error);
     if (error instanceof z.ZodError) {
       return NextResponse.json({ error: error.errors }, { status: 400 });
     }
     if (error instanceof Error) {
-      return NextResponse.json({ error: error.message }, { status: 400 });
+      return NextResponse.json({ error: error.message }, { status: 500 });
     }
     return NextResponse.json({ error: "Lỗi không xác định" }, { status: 500 });
   }
@@ -50,17 +55,16 @@ export async function POST(req: Request) {
 export async function GET() {
   try {
     const products = await prisma.product.findMany();
-    // Chuyển dữ liệu nhị phân thành base64 để gửi về frontend
     const formattedProducts = products.map((product) => ({
       ...product,
-      image: product.image ? `data:image/jpeg;base64,${product.image.toString()}` : null,
+      image: product.image ? `data:image/jpeg;base64,${Buffer.from(product.image).toString("base64")}` : null,
     }));
     return NextResponse.json(formattedProducts, { status: 200 });
   } catch (error) {
     console.error("GET Error:", error);
     if (error instanceof Error) {
-      return NextResponse.json({ error: error.message }, { status: 400 });
+      return NextResponse.json({ error: error.message }, { status: 500 });
     }
-    return NextResponse.json({ error: "Lỗi không xác định" }, { status: 400 });
+    return NextResponse.json({ error: "Lỗi không xác định" }, { status: 500 });
   }
 }

@@ -11,7 +11,8 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import InputFile from "@/components/products/InputFile";
-import { Loader2 } from "lucide-react"; // Dùng icon loading từ lucide-react
+import { Loader2 } from "lucide-react";
+import { formatPrice } from "@/lib/formatPrice";
 
 export function ProductManagement() {
   const [products, setProducts] = useState<any[]>([]);
@@ -30,7 +31,7 @@ export function ProductManagement() {
   });
   const [imageFile, setImageFile] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState("");
-  const [isLoading, setIsLoading] = useState(false); // Thêm trạng thái loading
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     fetchProducts();
@@ -41,6 +42,7 @@ export function ProductManagement() {
     try {
       const response = await fetch("/api/products");
       const data = await response.json();
+      console.log("Dữ liệu từ API:", data);
       setProducts(data);
     } catch (error) {
       console.error("Error fetching products:", error);
@@ -149,7 +151,7 @@ export function ProductManagement() {
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "Thêm sản phẩm thất bại");
-      setProducts((prev) => [...prev, { ...data, image: imageFile }]);
+      setProducts((prev) => [...prev, data]);
       setIsDialogOpen(false);
       resetForm();
     } catch (error) {
@@ -217,25 +219,18 @@ export function ProductManagement() {
           {products.map((product) => (
             <tr key={product.id}>
               <td className="py-2 px-4 border-b">
-                {product.image && (
-                  <img
-                    src={product.image}
-                    alt={product.name}
-                    className="h-16 w-16 object-cover"
-                  />
+                {product.image ? (
+                  <img src={product.image} alt={product.name} className="h-16 w-16 object-cover" />
+                ) : (
+                  <span>Không có ảnh</span>
                 )}
               </td>
               <td className="py-2 px-4 border-b">{product.name}</td>
-              <td className="py-2 px-4 border-b">{product.price}</td>
+              <td className="py-2 px-4 border-b">{formatPrice(product.price)}</td>
               <td className="py-2 px-4 border-b">{product.stock}</td>
-              <td className="py-2 px-4 border-b">{product.discountPrice || 0}</td>
+              <td className="py-2 px-4 border-b">{formatPrice(product.discountPrice) || 0}</td>
               <td className="py-2 px-4 border-b">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleEditProduct(product)}
-                  disabled={isLoading}
-                >
+                <Button variant="outline" size="sm" onClick={() => handleEditProduct(product)}>
                   Sửa
                 </Button>
                 <Button
@@ -246,7 +241,6 @@ export function ProductManagement() {
                     setProductToDelete(product.id);
                     setIsDeleteDialogOpen(true);
                   }}
-                  disabled={isLoading}
                 >
                   Xóa
                 </Button>
@@ -255,51 +249,95 @@ export function ProductManagement() {
           ))}
         </tbody>
       </table>
+      {!isLoading && products.length === 0 && (
+        <p className="text-center pt-8">Chưa có sản phẩm nào!</p>
+      )}
 
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent>
+      {/* Dialog thêm sản phẩm mới */}
+      <Dialog
+        open={isDialogOpen}
+        onOpenChange={(open) => {
+          setIsDialogOpen(open);
+          if (!open) resetForm(); // Reset form khi dialog đóng
+        }}
+      >
+        <DialogContent className="max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Thêm sản phẩm mới</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
-            <Input
-              placeholder="Tên sản phẩm"
-              value={newProduct.name}
-              onChange={(e) => setNewProduct({ ...newProduct, name: e.target.value })}
-              disabled={isLoading}
-            />
-            <Input
-              placeholder="Giá"
-              type="number"
-              value={newProduct.price}
-              onChange={(e) => setNewProduct({ ...newProduct, price: e.target.value })}
-              disabled={isLoading}
-            />
-            <Input
-              placeholder="Tồn kho"
-              type="number"
-              value={newProduct.stock}
-              onChange={(e) => setNewProduct({ ...newProduct, stock: e.target.value })}
-              disabled={isLoading}
-            />
-            <Input
-              placeholder="Mô tả (tuỳ chọn)"
-              value={newProduct.description}
-              onChange={(e) =>
-                setNewProduct({ ...newProduct, description: e.target.value })
-              }
-              disabled={isLoading}
-            />
-            <Input
-              placeholder="Giảm giá (nếu có)"
-              type="number"
-              value={newProduct.discountPrice}
-              onChange={(e) =>
-                setNewProduct({ ...newProduct, discountPrice: e.target.value })
-              }
-              disabled={isLoading}
-            />
-            <InputFile onFileChange={(fileData) => setImageFile(fileData)} disabled={isLoading} />
+            <div>
+              <label htmlFor="name" className="block text-sm font-medium">
+                Tên sản phẩm
+              </label>
+              <Input
+                id="name"
+                placeholder="Tên sản phẩm"
+                value={newProduct.name}
+                onChange={(e) => setNewProduct({ ...newProduct, name: e.target.value })}
+                disabled={isLoading}
+              />
+            </div>
+            <div>
+              <label htmlFor="price" className="block text-sm font-medium">
+                Giá
+              </label>
+              <Input
+                id="price"
+                placeholder="Giá"
+                type="number"
+                value={newProduct.price}
+                onChange={(e) => setNewProduct({ ...newProduct, price: e.target.value })}
+                disabled={isLoading}
+              />
+            </div>
+            <div>
+              <label htmlFor="stock" className="block text-sm font-medium">
+                Tồn kho
+              </label>
+              <Input
+                id="stock"
+                placeholder="Tồn kho"
+                type="number"
+                value={newProduct.stock}
+                onChange={(e) => setNewProduct({ ...newProduct, stock: e.target.value })}
+                disabled={isLoading}
+              />
+            </div>
+            <div>
+              <label htmlFor="description" className="block text-sm font-medium">
+                Mô tả (tuỳ chọn)
+              </label>
+              <Input
+                id="description"
+                placeholder="Mô tả (tuỳ chọn)"
+                value={newProduct.description}
+                onChange={(e) => setNewProduct({ ...newProduct, description: e.target.value })}
+                disabled={isLoading}
+              />
+            </div>
+            <div>
+              <label htmlFor="discountPrice" className="block text-sm font-medium">
+                Giảm giá (nếu có)
+              </label>
+              <Input
+                id="discountPrice"
+                placeholder="Giảm giá (nếu có)"
+                type="number"
+                value={newProduct.discountPrice}
+                onChange={(e) => setNewProduct({ ...newProduct, discountPrice: e.target.value })}
+                disabled={isLoading}
+              />
+            </div>
+            <div>
+              <label htmlFor="image" className="block text-sm font-medium">
+                Hình ảnh
+              </label>
+              <InputFile
+                onFileChange={(fileData) => setImageFile(fileData)}
+                disabled={isLoading}
+              />
+            </div>
             {errorMessage && <p className="text-red-500">{errorMessage}</p>}
           </div>
           <DialogFooter>
@@ -314,51 +352,91 @@ export function ProductManagement() {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent>
+      {/* Dialog sửa sản phẩm */}
+      <Dialog
+        open={isEditDialogOpen}
+        onOpenChange={(open) => {
+          setIsEditDialogOpen(open);
+          if (!open) resetForm(); // Reset form khi dialog đóng
+        }}
+      >
+        <DialogContent className="max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Sửa sản phẩm</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
-            <Input
-              placeholder="Tên sản phẩm"
-              value={newProduct.name}
-              onChange={(e) => setNewProduct({ ...newProduct, name: e.target.value })}
-              disabled={isLoading}
-            />
-            <Input
-              placeholder="Giá"
-              type="number"
-              value={newProduct.price}
-              onChange={(e) => setNewProduct({ ...newProduct, price: e.target.value })}
-              disabled={isLoading}
-            />
-            <Input
-              placeholder="Tồn kho"
-              type="number"
-              value={newProduct.stock}
-              onChange={(e) => setNewProduct({ ...newProduct, stock: e.target.value })}
-              disabled={isLoading}
-            />
-            <Input
-              placeholder="Mô tả (tuỳ chọn)"
-              value={newProduct.description}
-              onChange={(e) =>
-                setNewProduct({ ...newProduct, description: e.target.value })
-              }
-              disabled={isLoading}
-            />
-            <Input
-              placeholder="Giảm giá (nếu có)"
-              type="number"
-              value={newProduct.discountPrice}
-              onChange={(e) =>
-                setNewProduct({ ...newProduct, discountPrice: e.target.value })
-              }
-              disabled={isLoading}
-            />
-            <InputFile onFileChange={(fileData) => setImageFile(fileData)} disabled={isLoading} />
-
+            <div>
+              <label htmlFor="edit-name" className="block text-sm font-medium">
+                Tên sản phẩm
+              </label>
+              <Input
+                id="edit-name"
+                placeholder="Tên sản phẩm"
+                value={newProduct.name}
+                onChange={(e) => setNewProduct({ ...newProduct, name: e.target.value })}
+                disabled={isLoading}
+              />
+            </div>
+            <div>
+              <label htmlFor="edit-price" className="block text-sm font-medium">
+                Giá
+              </label>
+              <Input
+                id="edit-price"
+                placeholder="Giá"
+                type="number"
+                value={newProduct.price}
+                onChange={(e) => setNewProduct({ ...newProduct, price: e.target.value })}
+                disabled={isLoading}
+              />
+            </div>
+            <div>
+              <label htmlFor="edit-stock" className="block text-sm font-medium">
+                Tồn kho
+              </label>
+              <Input
+                id="edit-stock"
+                placeholder="Tồn kho"
+                type="number"
+                value={newProduct.stock}
+                onChange={(e) => setNewProduct({ ...newProduct, stock: e.target.value })}
+                disabled={isLoading}
+              />
+            </div>
+            <div>
+              <label htmlFor="edit-description" className="block text-sm font-medium">
+                Mô tả (tuỳ chọn)
+              </label>
+              <Input
+                id="edit-description"
+                placeholder="Mô tả (tuỳ chọn)"
+                value={newProduct.description}
+                onChange={(e) => setNewProduct({ ...newProduct, description: e.target.value })}
+                disabled={isLoading}
+              />
+            </div>
+            <div>
+              <label htmlFor="edit-discountPrice" className="block text-sm font-medium">
+                Giảm giá (nếu có)
+              </label>
+              <Input
+                id="edit-discountPrice"
+                placeholder="Giảm giá (nếu có)"
+                type="number"
+                value={newProduct.discountPrice}
+                onChange={(e) => setNewProduct({ ...newProduct, discountPrice: e.target.value })}
+                disabled={isLoading}
+              />
+            </div>
+            <div>
+              <label htmlFor="edit-image" className="block text-sm font-medium">
+                Hình ảnh
+              </label>
+              <InputFile
+                onFileChange={(fileData) => setImageFile(fileData)}
+                disabled={isLoading}
+              />
+            </div>
             {errorMessage && <p className="text-red-500">{errorMessage}</p>}
           </div>
           <DialogFooter>
@@ -373,8 +451,15 @@ export function ProductManagement() {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <DialogContent>
+      {/* Dialog xác nhận xóa */}
+      <Dialog
+        open={isDeleteDialogOpen}
+        onOpenChange={(open) => {
+          setIsDeleteDialogOpen(open);
+          if (!open) setProductToDelete(null); // Reset productToDelete khi đóng
+        }}
+      >
+        <DialogContent className="max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Xác nhận xóa sản phẩm</DialogTitle>
           </DialogHeader>
