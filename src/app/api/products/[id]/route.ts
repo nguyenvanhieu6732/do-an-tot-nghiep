@@ -22,7 +22,7 @@ interface RouteParams {
 // GET handler (đã sửa)
 export async function GET(req: Request, { params }: RouteParams) {
   try {
-    // Kiểm tra ID hợp lệ trước khi query
+    // Kiểm tra ID hợp lệ
     if (!params.id || typeof params.id !== "string") {
       return NextResponse.json(
         { error: "ID sản phẩm không hợp lệ" },
@@ -41,31 +41,23 @@ export async function GET(req: Request, { params }: RouteParams) {
       );
     }
 
-    // Xử lý hình ảnh Buffer và chuẩn hóa dữ liệu trả về
+    // Chuẩn hóa dữ liệu trả về
     const formattedProduct = {
-      id: product.id,
-      name: product.name,
-      price: product.price,
-      stock: product.stock,
-      description: product.description || null,
-      image: product.image instanceof Buffer
-        ? `data:image/jpeg;base64,${product.image.toString("base64")}`
-        : product.image || null, // Trả về null nếu không có ảnh
-      discountPrice: product.discountPrice || null,
-      createdAt: product.createdAt?.toISOString() || null, // Thêm nếu cần
-      updatedAt: product.updatedAt?.toISOString() || null, // Thêm nếu cần
+      ...product,
+      image: product.image
+        ? `data:image/jpeg;base64,${Buffer.from(product.image).toString("base64")}`
+        : null,
     };
 
     return NextResponse.json(formattedProduct, { status: 200 });
   } catch (error) {
     console.error("GET Error:", error);
     if (error instanceof Error) {
-      return NextResponse.json({ error: error.message }, { status: 400 });
+      return NextResponse.json({ error: error.message }, { status: 500 });
     }
     return NextResponse.json({ error: "Lỗi không xác định" }, { status: 500 });
   }
 }
-
 // PUT handler (giữ nguyên)
 export async function PUT(req: Request, { params }: RouteParams) {
   try {

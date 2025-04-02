@@ -33,37 +33,34 @@ export default function ProductReviews({ productId }: ProductReviewsProps) {
     {
       id: 1,
       author: "Nguyễn Văn A",
-      avatar: "/placeholder.svg?height=100&width=100",
+      avatar: "/avatar/avt-1.jpg",
       rating: 5,
       date: "15/06/2024",
       title: "Sản phẩm tuyệt vời",
       content:
         "Chất lượng sản phẩm rất tốt, đúng như mô tả. Vải mềm, thoáng khí và rất thoải mái khi mặc. Tôi rất hài lòng với sản phẩm này.",
       helpful: 12,
-      images: ["/placeholder.svg?height=200&width=200", "/placeholder.svg?height=200&width=200"],
     },
     {
       id: 2,
       author: "Trần Văn B",
-      avatar: "/placeholder.svg?height=100&width=100",
-      rating: 4,
+      avatar: "/avatar/avt-2.jpg",
+      rating: 5,
       date: "10/06/2024",
       title: "Sản phẩm tốt",
       content: "Sản phẩm đẹp, chất lượng tốt. Tuy nhiên size hơi rộng một chút so với mô tả.",
       helpful: 5,
-      images: [],
     },
     {
       id: 3,
       author: "Lê Văn C",
-      avatar: "/placeholder.svg?height=100&width=100",
+      avatar: "/avatar/avt-3.jpg",
       rating: 5,
       date: "05/06/2024",
       title: "Rất ưng ý",
       content:
         "Đây là lần thứ 3 tôi mua sản phẩm từ LUXMEN và chưa bao giờ thất vọng. Chất lượng luôn đảm bảo và dịch vụ khách hàng tuyệt vời.",
       helpful: 8,
-      images: ["/placeholder.svg?height=200&width=200"],
     },
   ]
 
@@ -165,20 +162,7 @@ export default function ProductReviews({ productId }: ProductReviewsProps) {
                     <h5 className="font-medium mt-2">{review.title}</h5>
                     <p className="text-muted-foreground mt-1">{review.content}</p>
 
-                    {review.images.length > 0 && (
-                      <div className="flex gap-2 mt-4">
-                        {review.images.map((image, index) => (
-                          <div key={index} className="relative h-16 w-16 rounded-md overflow-hidden">
-                            <Image
-                              src={image || "/placeholder.svg"}
-                              alt={`Review image ${index + 1}`}
-                              fill
-                              className="object-cover"
-                            />
-                          </div>
-                        ))}
-                      </div>
-                    )}
+
 
                     <div className="flex items-center mt-4">
                       <Button variant="ghost" size="sm" className="h-8 gap-1 text-muted-foreground">

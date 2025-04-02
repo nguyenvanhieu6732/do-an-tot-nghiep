@@ -11,6 +11,7 @@ const productSchema = z.object({
   discountPrice: z.number().min(0, { message: "Giảm giá phải lớn hơn hoặc bằng 0" }).optional(),
 });
 
+// API POST giữ nguyên
 export async function POST(req: Request) {
   try {
     const body = await req.json();
@@ -28,12 +29,11 @@ export async function POST(req: Request) {
         price: validatedData.price,
         stock: validatedData.stock,
         description: validatedData.description,
-        image: imageBuffer, // Lưu dữ liệu nhị phân
+        image: imageBuffer,
         discountPrice: validatedData.discountPrice,
       },
     });
 
-    // Trả về sản phẩm với hình ảnh dạng base64 để frontend sử dụng ngay
     const productWithImage = {
       ...product,
       image: imageBuffer ? `data:image/jpeg;base64,${imageBuffer.toString("base64")}` : null,
@@ -52,14 +52,98 @@ export async function POST(req: Request) {
   }
 }
 
-export async function GET() {
+// API GET với phân trang và tùy chọn lấy tất cả sản phẩm
+export async function GET(req: Request) {
   try {
-    const products = await prisma.product.findMany();
+    const { searchParams } = new URL(req.url);
+    const page = searchParams.get("page");
+    const sort = searchParams.get("sort");
+
+    // Nếu không có page, lấy tất cả sản phẩm
+    if (!page) {
+      let orderBy: any = undefined;
+      if (sort) {
+        switch (sort) {
+          case "newest":
+            orderBy = { createdAt: "desc" };
+            break;
+          case "price-desc":
+            orderBy = { price: "desc" };
+            break;
+          case "price-asc":
+            orderBy = { price: "asc" };
+            break;
+          default:
+            orderBy = undefined;
+        }
+      }
+
+      const products = await prisma.product.findMany({
+        orderBy, // Nếu không có sort, lấy theo thứ tự mặc định của DB
+      });
+
+      const formattedProducts = products.map((product) => ({
+        ...product,
+        image: product.image ? `data:image/jpeg;base64,${Buffer.from(product.image).toString("base64")}` : null,
+      }));
+
+      return NextResponse.json(
+        {
+          products: formattedProducts,
+          totalProducts: formattedProducts.length,
+        },
+        { status: 200 }
+      );
+    }
+
+    // Logic phân trang (khi có page)
+    const pageNum = parseInt(page || "1", 10);
+    const pageSize = 6;
+    const skip = (pageNum - 1) * pageSize;
+
+    let orderBy: any = undefined;
+    if (sort) {
+      switch (sort) {
+        case "newest":
+          orderBy = { createdAt: "desc" };
+          break;
+        case "price-desc":
+          orderBy = { price: "desc" };
+          break;
+        case "price-asc":
+          orderBy = { price: "asc" };
+          break;
+        default:
+          orderBy = undefined;
+      }
+    }
+
+    const totalProducts = await prisma.product.count();
+    const totalPages = Math.ceil(totalProducts / pageSize);
+
+    const products = await prisma.product.findMany({
+      skip,
+      take: pageSize,
+      orderBy,
+    });
+
     const formattedProducts = products.map((product) => ({
       ...product,
       image: product.image ? `data:image/jpeg;base64,${Buffer.from(product.image).toString("base64")}` : null,
     }));
-    return NextResponse.json(formattedProducts, { status: 200 });
+
+    return NextResponse.json(
+      {
+        products: formattedProducts,
+        pagination: {
+          currentPage: pageNum,
+          pageSize,
+          totalProducts,
+          totalPages,
+        },
+      },
+      { status: 200 }
+    );
   } catch (error) {
     console.error("GET Error:", error);
     if (error instanceof Error) {

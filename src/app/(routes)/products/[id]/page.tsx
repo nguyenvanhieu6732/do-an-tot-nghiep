@@ -1,33 +1,34 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { Suspense } from "react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Heart, ShoppingBag, Star } from "lucide-react";
 import ProductGallery from "@/components/products/product-gallery";
-import RelatedProducts from "@/components/products/related-products";
+// Removed unused RelatedProducts import
 import ProductReviews from "@/components/products/product-reviews";
+import NotFound from "@/app/not-found";
+import Loading from "../../loading";
 
-
-
-export default function ProductDetailPage({ params }: { params: { slug: string } }) {
+export default function ProductDetailPage({ params: paramsPromise }: { params: Promise<{ id: string }> }) {
+  const params = React.use(paramsPromise);
   const [product, setProduct] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Hàm lấy dữ liệu sản phẩm từ API
+  // Hàm lấy dữ liệu sản phẩm từ API theo ID
   const fetchProduct = async () => {
     try {
-      const response = await fetch(`/api/products?slug=${params.slug}`); // Giả sử API hỗ trợ tìm theo slug
-      if (!response.ok) throw new Error("Không thể tải sản phẩm");
-      const data = await response.json();
-      if (Array.isArray(data) && data.length > 0) {
-        setProduct(data[0]); // Lấy sản phẩm đầu tiên nếu API trả về mảng
-      } else {
-        throw new Error("Sản phẩm không tồn tại");
+      const response = await fetch(`/api/products/${params.id}`);
+      if (!response.ok) {
+        if (response.status === 404) throw new Error("Không tìm thấy sản phẩm");
+        if (response.status === 400) throw new Error("ID sản phẩm không hợp lệ");
+        throw new Error("Lỗi không thể tải sản phẩm tải sản phẩm");
       }
+      const data = await response.json();
+      setProduct(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Đã xảy ra lỗi");
     } finally {
@@ -36,8 +37,13 @@ export default function ProductDetailPage({ params }: { params: { slug: string }
   };
 
   useEffect(() => {
-    fetchProduct();
-  }, [params.slug]);
+    if (params.id) {
+      fetchProduct();
+    } else {
+      setError("ID sản phẩm không được cung cấp");
+      setLoading(false);
+    }
+  }, [params.id]);
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat("vi-VN", {
@@ -48,13 +54,13 @@ export default function ProductDetailPage({ params }: { params: { slug: string }
   };
 
   if (loading) {
-    return <div className="container mx-auto px-4 py-8 text-center">Đang tải sản phẩm...</div>;
+    return <Loading />;
   }
 
   if (error || !product) {
     return (
       <div className="container mx-auto px-4 py-8 text-center text-red-500">
-        {error || "Sản phẩm không tồn tại"}
+        <NotFound />
       </div>
     );
   }
@@ -63,15 +69,14 @@ export default function ProductDetailPage({ params }: { params: { slug: string }
   const adaptedProduct = {
     ...product,
     salePrice: product.discountPrice || null,
-    rating: product.rating || 4.5, // Giả lập nếu không có trong DB
-    reviewCount: product.reviewCount || 0, // Giả lập nếu không có
-    images: product.image ? [product.image] : ["/placeholder.svg?height=600&width=400"], // Chỉ 1 ảnh từ DB
-    colors: product.colors || [{ name: "Mặc định", value: "default" }], // Giả lập nếu không có
-    sizes: product.sizes || ["M"], // Giả lập nếu không có
-    features: product.features || ["Chất liệu cao cấp", "Thiết kế hiện đại"], // Giả lập
-    sku: product.sku || `SKU-${product.id.slice(0, 8)}`, // Tạo SKU từ ID nếu không có
-    categories: product.categories || ["Sản phẩm"], // Giả lập
-    tags: product.tags || ["Mặc định"], // Giả lập
+    rating: product.rating || 5,
+    reviewCount: product.reviewCount || 0,
+    images: product.image ? [product.image] : ["/placeholder.svg?height=600&width=400"],
+    colors: product.colors || [{ name: "Mặc định", value: "default" }],
+    sizes: product.sizes || ["M"],
+    features: product.features || ["Chất liệu cao cấp", "Thiết kế hiện đại"],
+    categories: product.categories || ["Sản phẩm"],
+    tags: product.tags || ["Mặc định"],
   };
 
   return (
@@ -106,7 +111,7 @@ export default function ProductDetailPage({ params }: { params: { slug: string }
                 </div>
                 <span className="mx-2 text-muted-foreground">•</span>
                 <Link href="#reviews" className="text-sm text-muted-foreground hover:text-primary">
-                  {adaptedProduct.reviewCount} đánh giá
+                  {adaptedProduct.reviewCount || 3} đánh giá
                 </Link>
               </div>
             </div>
@@ -158,9 +163,6 @@ export default function ProductDetailPage({ params }: { params: { slug: string }
                     {adaptedProduct.stock > 0 ? "Còn hàng" : "Hết hàng"}
                   </span>
                 </div>
-                <div className="text-sm text-muted-foreground">
-                  SKU: <span className="font-medium">{adaptedProduct.sku}</span>
-                </div>
               </div>
 
               <div className="flex gap-4">
@@ -204,32 +206,15 @@ export default function ProductDetailPage({ params }: { params: { slug: string }
         <Tabs defaultValue="description">
           <TabsList className="w-full justify-start border-b rounded-none">
             <TabsTrigger value="description">Mô tả</TabsTrigger>
-            <TabsTrigger value="specifications">Thông số</TabsTrigger>
             <TabsTrigger value="reviews" id="reviews">
-              Đánh giá ({adaptedProduct.reviewCount})
+              Đánh giá ({adaptedProduct.reviewCount || 3})
             </TabsTrigger>
           </TabsList>
           <TabsContent value="description" className="py-6">
             <div className="prose max-w-none">
               <h3>Giới thiệu về {adaptedProduct.name}</h3>
+              <br />
               <p>{adaptedProduct.description || "Không có mô tả chi tiết cho sản phẩm này."}</p>
-            </div>
-          </TabsContent>
-          <TabsContent value="specifications" className="py-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              <div>
-                <h3 className="text-lg font-medium mb-4">Thông số chi tiết</h3>
-                <div className="space-y-2">
-                  <div className="grid grid-cols-2 border-b pb-2">
-                    <span className="text-muted-foreground">Thương hiệu</span>
-                    <span>LUXMEN</span>
-                  </div>
-                  <div className="grid grid-cols-2 border-b pb-2">
-                    <span className="text-muted-foreground">Chất liệu</span>
-                    <span>{adaptedProduct.material || "Không xác định"}</span>
-                  </div>
-                </div>
-              </div>
             </div>
           </TabsContent>
           <TabsContent value="reviews" className="py-6">
@@ -240,8 +225,7 @@ export default function ProductDetailPage({ params }: { params: { slug: string }
         </Tabs>
       </div>
 
-      {/* Related Products */}
-      <div className="mt-16">
+      {/* <div className="mt-16">
         <h2 className="text-2xl font-bold mb-8">Sản phẩm liên quan</h2>
         <Suspense fallback={<div>Đang tải sản phẩm liên quan...</div>}>
           <RelatedProducts
@@ -249,7 +233,7 @@ export default function ProductDetailPage({ params }: { params: { slug: string }
             currentProductId={adaptedProduct.id}
           />
         </Suspense>
-      </div>
+      </div> */}
     </div>
   );
 }

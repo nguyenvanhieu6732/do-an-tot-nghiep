@@ -1,8 +1,6 @@
 import { Suspense } from "react"
 import ProductList from "@/components/products/product-list"
 import ProductFilters from "@/components/products/product-filters"
-import ProductSorting from "@/components/products/product-sorting"
-import ProductsLoading from "@/components/products/products-loading"
 
 export const metadata = {
   title: "Sản phẩm - LUXMEN",
@@ -25,11 +23,7 @@ export default function ProductsPage() {
         </div>
 
         <div className="w-full lg:w-3/4">
-          <ProductSorting />
-
-          <Suspense fallback={<ProductsLoading />}>
             <ProductList />
-          </Suspense>
         </div>
       </div>
     </div>

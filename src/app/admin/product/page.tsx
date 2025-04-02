@@ -41,9 +41,10 @@ export function ProductManagement() {
     setIsLoading(true);
     try {
       const response = await fetch("/api/products");
+      if (!response.ok) throw new Error("Không thể lấy dữ liệu sản phẩm");
       const data = await response.json();
       console.log("Dữ liệu từ API:", data);
-      setProducts(data);
+      setProducts(data.products); // Lấy mảng products từ data
     } catch (error) {
       console.error("Error fetching products:", error);
     } finally {
@@ -267,7 +268,7 @@ export function ProductManagement() {
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <label htmlFor="name" className="block text-sm font-medium">
+              <label htmlFor="name" className="block text-sm font-medium pb-2">
                 Tên sản phẩm
               </label>
               <Input
@@ -279,7 +280,7 @@ export function ProductManagement() {
               />
             </div>
             <div>
-              <label htmlFor="price" className="block text-sm font-medium">
+              <label htmlFor="price" className="block text-sm font-medium pb-2">
                 Giá
               </label>
               <Input
@@ -292,7 +293,7 @@ export function ProductManagement() {
               />
             </div>
             <div>
-              <label htmlFor="stock" className="block text-sm font-medium">
+              <label htmlFor="stock" className="block text-sm font-medium pb-2">
                 Tồn kho
               </label>
               <Input
@@ -305,7 +306,7 @@ export function ProductManagement() {
               />
             </div>
             <div>
-              <label htmlFor="description" className="block text-sm font-medium">
+              <label htmlFor="description" className="block text-sm font-medium pb-2">
                 Mô tả (tuỳ chọn)
               </label>
               <Input
@@ -317,7 +318,7 @@ export function ProductManagement() {
               />
             </div>
             <div>
-              <label htmlFor="discountPrice" className="block text-sm font-medium">
+              <label htmlFor="discountPrice" className="block text-sm font-medium pb-2">
                 Giảm giá (nếu có)
               </label>
               <Input
@@ -330,7 +331,7 @@ export function ProductManagement() {
               />
             </div>
             <div>
-              <label htmlFor="image" className="block text-sm font-medium">
+              <label htmlFor="image" className="block text-sm font-medium pb-2">
                 Hình ảnh
               </label>
               <InputFile
@@ -366,7 +367,7 @@ export function ProductManagement() {
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <label htmlFor="edit-name" className="block text-sm font-medium">
+              <label htmlFor="edit-name" className="block text-sm font-medium pb-2">
                 Tên sản phẩm
               </label>
               <Input
@@ -378,7 +379,7 @@ export function ProductManagement() {
               />
             </div>
             <div>
-              <label htmlFor="edit-price" className="block text-sm font-medium">
+              <label htmlFor="edit-price" className="block text-sm font-medium pb-2">
                 Giá
               </label>
               <Input
@@ -391,7 +392,7 @@ export function ProductManagement() {
               />
             </div>
             <div>
-              <label htmlFor="edit-stock" className="block text-sm font-medium">
+              <label htmlFor="edit-stock" className="block text-sm font-medium pb-2">
                 Tồn kho
               </label>
               <Input
@@ -404,7 +405,7 @@ export function ProductManagement() {
               />
             </div>
             <div>
-              <label htmlFor="edit-description" className="block text-sm font-medium">
+              <label htmlFor="edit-description" className="block text-sm font-medium pb-2">
                 Mô tả (tuỳ chọn)
               </label>
               <Input
@@ -416,7 +417,7 @@ export function ProductManagement() {
               />
             </div>
             <div>
-              <label htmlFor="edit-discountPrice" className="block text-sm font-medium">
+              <label htmlFor="edit-discountPrice" className="block text-sm font-medium pb-2">
                 Giảm giá (nếu có)
               </label>
               <Input
@@ -429,7 +430,7 @@ export function ProductManagement() {
               />
             </div>
             <div>
-              <label htmlFor="edit-image" className="block text-sm font-medium">
+              <label htmlFor="edit-image" className="block text-sm font-medium pb-2">
                 Hình ảnh
               </label>
               <InputFile
