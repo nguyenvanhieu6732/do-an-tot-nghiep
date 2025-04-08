@@ -1,4 +1,3 @@
-import { Suspense } from "react"
 import ProductList from "@/components/products/product-list"
 import ProductFilters from "@/components/products/product-filters"
 

@@ -14,7 +14,6 @@ import { UserButton, useUser } from "@clerk/nextjs" // Import UserButton từ Cl
 const navItems = [
   { name: "Trang chủ", href: "/" },
   { name: "Sản phẩm", href: "/products" },
-  // { name: "Bộ sưu tập", href: "/collections" },
   { name: "Khuyến mãi", href: "/sale" },
   { name: "Về chúng tôi", href: "/about" },
   { name: "Liên hệ", href: "/contact" },

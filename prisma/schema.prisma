@@ -8,37 +8,68 @@ datasource db {
 }
 
 model User {
-  id        String   @id @map("_id")  // Dùng string thay vì ObjectId
-  email     String   @unique
-  firstName String?  
-  lastName  String?  
-  imageUrl  String?  
-  role      String   @default("user") // user | admin
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  orders    Order[]  @relation("UserOrders")
+  id        String     @id @map("_id")
+  email     String     @unique
+  firstName String?
+  lastName  String?
+  imageUrl  String?
+  phone     String?
+  address   String?
+  role      String     @default("user")
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  orders    Order[]
+  cartItems CartItem[]
 }
 
 model Product {
-  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  id            String      @id @default(auto()) @map("_id") @db.ObjectId
   name          String
   price         Float
   stock         Int
   description   String?
-  image         Bytes?   
+  image         Bytes?
   discountPrice Float?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  orders        Order[]   @relation("ProductOrders") 
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  orderItems    OrderItem[]
+  cartItems     CartItem[]
 }
 
 model Order {
-  id        String    @id @default(auto()) @map("_id") @db.ObjectId
-  userId    String    
-  user      User      @relation(fields: [userId], references: [id], name: "UserOrders")
-  productId String    
-  product   Product   @relation(fields: [productId], references: [id], name: "ProductOrders")
-  quantity  Int
-  createdAt DateTime  @default(now())
+  id             String      @id @default(auto()) @map("_id") @db.ObjectId
+  userId         String
+  status         String
+  user           User        @relation(fields: [userId], references: [id])
+  paymentMethod  String?
+  shippingMethod String?
+  name           String?
+  address        String?
+  phone          String?
+  totalPrice     Float
+  items          OrderItem[]
+  createdAt      DateTime    @default(now())
 }
 
+model OrderItem {
+  id        String  @id @default(auto()) @map("_id") @db.ObjectId
+  orderId   String  @db.ObjectId
+  order     Order   @relation(fields: [orderId], references: [id])
+  productId String  @db.ObjectId
+  product   Product @relation(fields: [productId], references: [id])
+  quantity  Int
+  color     String?
+  size      String?
+}
+
+model CartItem {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String
+  productId String   @db.ObjectId
+  quantity  Int
+  color     String?
+  size      String?
+  user      User     @relation(fields: [userId], references: [id])
+  product   Product  @relation(fields: [productId], references: [id])
+  createdAt DateTime @default(now())
+}

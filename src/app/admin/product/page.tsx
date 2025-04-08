@@ -205,51 +205,54 @@ export function ProductManagement() {
           <Loader2 className="h-8 w-8 animate-spin" />
         </div>
       )}
-      <table className="min-w-full bg-muted">
-        <thead>
-          <tr>
-            <th className="py-2 px-4 border-b text-left">Hình ảnh</th>
-            <th className="py-2 px-4 border-b text-left">Tên sản phẩm</th>
-            <th className="py-2 px-4 border-b text-left">Giá</th>
-            <th className="py-2 px-4 border-b text-left">Tồn kho</th>
-            <th className="py-2 px-4 border-b text-left">Giảm giá</th>
-            <th className="py-2 px-4 border-b text-left">Hành động</th>
-          </tr>
-        </thead>
-        <tbody>
-          {products.map((product) => (
-            <tr key={product.id}>
-              <td className="py-2 px-4 border-b">
-                {product.image ? (
-                  <img src={product.image} alt={product.name} className="h-16 w-16 object-cover" />
-                ) : (
-                  <span>Không có ảnh</span>
-                )}
-              </td>
-              <td className="py-2 px-4 border-b">{product.name}</td>
-              <td className="py-2 px-4 border-b">{formatPrice(product.price)}</td>
-              <td className="py-2 px-4 border-b">{product.stock}</td>
-              <td className="py-2 px-4 border-b">{formatPrice(product.discountPrice) || 0}</td>
-              <td className="py-2 px-4 border-b">
-                <Button variant="outline" size="sm" onClick={() => handleEditProduct(product)}>
-                  Sửa
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="ml-2"
-                  onClick={() => {
-                    setProductToDelete(product.id);
-                    setIsDeleteDialogOpen(true);
-                  }}
-                >
-                  Xóa
-                </Button>
-              </td>
+      <div className="max-w-5xl mx-auto overflow-x-auto">
+        <table className="w-full bg-muted">
+          <thead>
+            <tr>
+              <th className="py-2 px-4 border-b text-left">Hình ảnh</th>
+              <th className="py-2 px-4 border-b text-left">Tên sản phẩm</th>
+              <th className="py-2 px-4 border-b text-left">Giá</th>
+              <th className="py-2 px-4 border-b text-left">Tồn kho</th>
+              <th className="py-2 px-4 border-b text-left">Giảm giá</th>
+              <th className="py-2 px-4 border-b text-left">Hành động</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {products.map((product) => (
+              <tr key={product.id}>
+                <td className="py-2 px-4 border-b">
+                  {product.image ? (
+                    <img src={product.image} alt={product.name} className="h-16 w-16 object-cover" />
+                  ) : (
+                    <span>Không có ảnh</span>
+                  )}
+                </td>
+                <td className="py-2 px-4 border-b">{product.name.length > 30 ? product.name.substring(0, 30) + "..." : product.name}</td>
+                <td className="py-2 px-4 border-b">{formatPrice(product.price)}</td>
+                <td className="py-2 px-4 border-b">{product.stock}</td>
+                <td className="py-2 px-4 border-b">{formatPrice(product.discountPrice) || 0}</td>
+                <td className="py-2 px-4 border-b">
+                  <Button variant="outline" size="sm" onClick={() => handleEditProduct(product)}>
+                    Sửa
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="ml-2"
+                    onClick={() => {
+                      setProductToDelete(product.id);
+                      setIsDeleteDialogOpen(true);
+                    }}
+                  >
+                    Xóa
+                  </Button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
       {!isLoading && products.length === 0 && (
         <p className="text-center pt-8">Chưa có sản phẩm nào!</p>
       )}

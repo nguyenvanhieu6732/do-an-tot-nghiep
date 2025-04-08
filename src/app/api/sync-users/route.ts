@@ -12,7 +12,6 @@ export async function GET() {
       return NextResponse.json({ error: "Server configuration error" }, { status: 500 });
     }
 
-    console.log("Fetching users from Clerk...");
     const response = await axios.get(CLERK_API_URL, {
       headers: { Authorization: `Bearer ${CLERK_SECRET_KEY}` },
     });
@@ -26,7 +25,6 @@ export async function GET() {
 
     // Lấy tất cả user từ database
     const dbUsers = await prisma.user.findMany();
-    console.log("Fetched users from database:", dbUsers.length);
 
     const dbUserIds = dbUsers.map(user => user.id);
 
@@ -43,6 +41,8 @@ export async function GET() {
       const firstName = clerkUser.first_name || "";
       const lastName = clerkUser.last_name || "";
       const imageUrl = clerkUser.image_url || "";
+      const phone = clerkUser.phone_numbers?.[0]?.phone_number || "";
+      const address = clerkUser.addresses?.[0]?.address || null;
 
       if (!email) {
         console.warn(`Skipping user ${clerkUser.id} because email is missing.`);
@@ -66,7 +66,14 @@ export async function GET() {
               lastName,
               imageUrl,
               role: "user",
-            },
+              phone,
+              address: JSON.stringify({
+                city: address?.city || "",
+                district: address?.district || "",
+                ward: address?.ward || "",
+                street: address?.street || "",
+              }),
+            }
           });
         }
       } catch (dbError) {

@@ -9,6 +9,7 @@ import Footer from "@/components/Layout/Footer";
 import "./globals.css";
 import Loading from "./(routes)/loading";
 import { ReactNode } from "react";
+import { Toaster } from 'sonner'
 
 
 // Component con để xử lý logic đồng bộ user
@@ -55,7 +56,10 @@ export default function RootLayout({ children }: { children: ReactNode }) {
             <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
               <UserSync>
                 <Header />
-                <main>{children}</main>
+                <main>
+                  <Toaster />
+                  {children}
+                </main>
                 <Footer />
               </UserSync>
             </ThemeProvider>

@@ -20,10 +20,15 @@ interface RouteParams {
 }
 
 // GET handler (đã sửa)
-export async function GET(req: Request, { params }: RouteParams) {
+export async function GET(
+  req: Request,
+  context: { params: Promise<{ id: string }> | { id: string } }
+) {
   try {
-    // Kiểm tra ID hợp lệ
-    if (!params.id || typeof params.id !== "string") {
+    const params = 'then' in context.params ? await context.params : context.params;
+    const { id } = params;
+
+    if (!id || typeof id !== "string") {
       return NextResponse.json(
         { error: "ID sản phẩm không hợp lệ" },
         { status: 400 }
@@ -31,7 +36,7 @@ export async function GET(req: Request, { params }: RouteParams) {
     }
 
     const product = await prisma.product.findUnique({
-      where: { id: params.id },
+      where: { id },
     });
 
     if (!product) {
@@ -41,7 +46,6 @@ export async function GET(req: Request, { params }: RouteParams) {
       );
     }
 
-    // Chuẩn hóa dữ liệu trả về
     const formattedProduct = {
       ...product,
       image: product.image

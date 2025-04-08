@@ -13,16 +13,12 @@ const slides = [
     image: "/banner/banner-4.jpg",
     title: "Bộ sưu tập Thu Đông 2024",
     description: "Khám phá phong cách mới với những thiết kế độc đáo và sang trọng",
-    cta: "Mua ngay",
-    link: "/collections/autumn-winter-2024",
   },
   {
     id: 2,
     image: "/banner/banner-5.jpg",
     title: "Phong cách công sở",
     description: "Lịch lãm và chuyên nghiệp với các mẫu vest, áo sơ mi cao cấp",
-    cta: "Khám phá",
-    link: "/collections/office-wear",
   },
   {
     id: 3,
@@ -30,8 +26,7 @@ const slides = [
     title: "Thời trang dạo phố",
     description: "Thoải mái và phong cách với các thiết kế casual hiện đại",
     cta: "Xem ngay",
-    link: "/collections/casual",
-  },
+  }
 ]
 
 export default function HeroSection() {
@@ -56,7 +51,7 @@ export default function HeroSection() {
     }
 
     return () => clearInterval(interval)
-  }, [current, autoplay,nextSlide])
+  }, [current, autoplay, nextSlide])
 
   return (
     <div className="relative h-[70vh] md:h-[80vh] overflow-hidden">
@@ -91,9 +86,6 @@ export default function HeroSection() {
               >
                 <h1 className="text-3xl md:text-5xl font-bold mb-4">{slides[current].title}</h1>
                 <p className="text-lg md:text-xl mb-8">{slides[current].description}</p>
-                <Button asChild size="lg" className="rounded-full px-8">
-                  <Link href={slides[current].link}>{slides[current].cta}</Link>
-                </Button>
               </motion.div>
             </div>
           </div>

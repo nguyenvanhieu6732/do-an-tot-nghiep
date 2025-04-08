@@ -31,6 +31,7 @@ export async function POST(req: Request) {
         description: validatedData.description,
         image: imageBuffer,
         discountPrice: validatedData.discountPrice,
+        id: undefined, // Ensure Prisma auto-generates the ID
       },
     });
 

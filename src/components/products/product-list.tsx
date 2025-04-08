@@ -62,7 +62,6 @@ export default function ProductList({ sort: initialSort }: { sort?: string | nul
       const response = await fetch(url);
       if (!response.ok) throw new Error("Không thể lấy dữ liệu sản phẩm");
       const data = await response.json();
-      console.log("Fetched products:", data); // Debug dữ liệu trả về
       setProducts(Array.isArray(data.products) ? data.products : []); // Ensure products is always an array
       setPagination(data.pagination); // Thông tin phân trang từ API
     } catch (error) {
@@ -209,7 +208,7 @@ export default function ProductList({ sort: initialSort }: { sort?: string | nul
 
                 <div className="mt-4">
                   <Link href={`/products/${product.id}`} className="block">
-                    <h3 className="font-medium text-lg hover:text-primary transition-colors">
+                    <h3 className="font-medium text-lg hover:text-primary transition-colors line-clamp-1">
                       {product.name}
                     </h3>
                   </Link>
