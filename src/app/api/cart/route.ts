@@ -73,7 +73,7 @@ export async function GET(req: NextRequest) {
   try {
     const cartItems = await prisma.cartItem.findMany({
       where: { userId },
-      include: { product: true }, // Lấy thông tin sản phẩm
+      include: { product: true }, 
     });
     return NextResponse.json(cartItems);
   } catch (error) {

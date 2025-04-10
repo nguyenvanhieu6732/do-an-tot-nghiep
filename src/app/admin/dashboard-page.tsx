@@ -4,10 +4,8 @@ import { useState, useEffect } from "react"
 import { Package, ShoppingCart, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useMediaQuery } from "@/hooks/use-media-query"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
-import { Input } from "@/components/ui/input"
-import InputFile from "@/components/products/uploadFile"
 import { ProductManagement } from "./product/page"
+import AdminOrdersPage from "./orders/page"
 
 export function DashboardPage() {
     const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -69,14 +67,10 @@ export function DashboardPage() {
                     <ProductManagement />
                 )}
                 {selectedMenu === "orders" && (
-                    <div>
-                        <h2 className="text-2xl font-bold mb-4">Danh sách đơn hàng</h2>
-                        {/* Render your orders here */}
-                    </div>
+                    <AdminOrdersPage />
                 )}
             </div>
 
-            {/* Add Product Dialog */}
 
         </div>
     )

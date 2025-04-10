@@ -1,4 +1,3 @@
-// app/api/orders/[id]/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
 import { getAuth } from '@clerk/nextjs/server';
@@ -7,20 +6,30 @@ const prisma = new PrismaClient();
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> | { id: string } }
 ) {
   const { userId } = getAuth(req);
-  
+
   if (!userId) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
   try {
+    // Kiểm tra role của user
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { role: true },
+    });
+
+    if (!user) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    }
+
+    const params = "then" in context.params ? await context.params : context.params;
+    const { id } = params;
+
     const order = await prisma.order.findUnique({
-      where: { 
-        id: params.id,
-        userId // Đảm bảo chỉ user sở hữu order mới xem được
-      },
+      where: { id },
       include: {
         user: {
           select: {
@@ -40,8 +49,16 @@ export async function GET(
 
     if (!order) {
       return NextResponse.json(
-        { error: 'Order not found or unauthorized' },
+        { error: 'Order not found' },
         { status: 404 }
+      );
+    }
+
+    // Nếu không phải admin, kiểm tra xem đơn hàng có thuộc về user không
+    if (user.role !== "admin" && order.userId !== userId) {
+      return NextResponse.json(
+        { error: 'Unauthorized: You can only view your own orders' },
+        { status: 403 }
       );
     }
 
@@ -56,31 +73,51 @@ export async function GET(
 
 export async function PUT(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> | { id: string } }
 ) {
   const { userId } = getAuth(req);
-  
+
   if (!userId) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
   try {
-    // Kiểm tra order thuộc về user
-    const existingOrder = await prisma.order.findUnique({
-      where: { id: params.id },
+    // Kiểm tra role của user
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { role: true },
     });
-    
-    if (!existingOrder || existingOrder.userId !== userId) {
+
+    if (!user) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    }
+
+    const params = "then" in context.params ? await context.params : context.params;
+    const { id } = params;
+
+    const existingOrder = await prisma.order.findUnique({
+      where: { id },
+    });
+
+    if (!existingOrder) {
       return NextResponse.json(
-        { error: 'Order not found or unauthorized' },
+        { error: 'Order not found' },
         { status: 404 }
+      );
+    }
+
+    // Nếu không phải admin, kiểm tra xem đơn hàng có thuộc về user không
+    if (user.role !== "admin" && existingOrder.userId !== userId) {
+      return NextResponse.json(
+        { error: 'Unauthorized: You can only update your own orders' },
+        { status: 403 }
       );
     }
 
     const { items } = await req.json();
 
     const order = await prisma.order.update({
-      where: { id: params.id },
+      where: { id },
       data: {
         items: {
           deleteMany: {},
@@ -108,47 +145,68 @@ export async function PUT(
   }
 }
 
-
 export async function DELETE(
   req: NextRequest,
   context: { params: Promise<{ id: string }> | { id: string } }
 ) {
+  const { userId } = getAuth(req);
+
+  if (!userId) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
   try {
+    // Kiểm tra role của user
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { role: true },
+    });
+
+    if (!user) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    }
+
     const params = "then" in context.params ? await context.params : context.params;
     const { id } = params;
 
     if (!id || typeof id !== "string") {
-      return NextResponse.json({ error: "ID không hợp lệ" }, { status: 400 });
+      return NextResponse.json({ error: "Invalid ID" }, { status: 400 });
     }
 
-    // Kiểm tra đơn hàng tồn tại
     const order = await prisma.order.findUnique({
       where: { id },
     });
 
     if (!order) {
       return NextResponse.json(
-        { error: "Không tìm thấy đơn hàng" },
+        { error: "Order not found" },
         { status: 404 }
       );
     }
 
-    // Kiểm tra trạng thái đơn hàng (chỉ hủy nếu đang PROCESSING)
+    // Nếu không phải admin, kiểm tra xem đơn hàng có thuộc về user không
+    if (user.role !== "admin" && order.userId !== userId) {
+      return NextResponse.json(
+        { error: 'Unauthorized: You can only cancel your own orders' },
+        { status: 403 }
+      );
+    }
+
+    // Kiểm tra trạng thái đơn hàng
     if (order.status !== "PROCESSING") {
       return NextResponse.json(
-        { error: "Chỉ có thể hủy đơn hàng đang xử lý" },
+        { error: "Only orders in PROCESSING status can be canceled" },
         { status: 400 }
       );
     }
 
-    // Cập nhật trạng thái đơn hàng thành CANCELLED thay vì xóa
     const cancelledOrder = await prisma.order.update({
       where: { id },
       data: { status: "CANCELLED" },
     });
 
     return NextResponse.json(
-      { message: "Hủy đơn hàng thành công", order: cancelledOrder },
+      { message: "Order successfully canceled", order: cancelledOrder },
       { status: 200 }
     );
   } catch (error) {

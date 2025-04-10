@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
 import { z } from "zod";
+import { getAuth } from "@clerk/nextjs/server";
 
 const prisma = new PrismaClient();
 
-// Schema validation cho POST request
 const createOrderSchema = z.object({
   userId: z.string().min(1, "userId is required"),
   paymentMethod: z.string().min(1, "paymentMethod is required"),
@@ -14,18 +14,39 @@ const createOrderSchema = z.object({
   phone: z.string().min(1, "phone is required"),
 });
 
-// Schema validation cho GET request
 const getOrderSchema = z.object({
-  userId: z.string().min(1, "userId is required"),
+  userId: z.string().min(1, "userId is required").nullable(),
 });
 
 export async function GET(req: NextRequest) {
   try {
-    // Lấy và validate userId từ query parameter
-    const url = new URL(req.url);
-    const userId = url.searchParams.get("userId");
+    const { userId } = getAuth(req);
+    if (!userId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
-    const validatedQuery = getOrderSchema.safeParse({ userId });
+    const url = new URL(req.url);
+    const queryUserId = url.searchParams.get("userId");
+
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { role: true },
+    });
+
+    if (!user) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+
+    if (user.role.toUpperCase() !== "ADMIN") {
+      if (!queryUserId || queryUserId !== userId) {
+        return NextResponse.json(
+          { error: "Forbidden: Only admins can view all orders" },
+          { status: 403 }
+        );
+      }
+    }
+
+    const validatedQuery = getOrderSchema.safeParse({ userId: queryUserId });
     if (!validatedQuery.success) {
       return NextResponse.json(
         { error: validatedQuery.error.format() },
@@ -33,9 +54,14 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    // Lấy danh sách đơn hàng của user
+    const whereClause = user.role.toUpperCase() === "ADMIN" && !queryUserId
+      ? {}
+      : validatedQuery.data.userId
+      ? { userId: validatedQuery.data.userId }
+      : {};
+
     const orders = await prisma.order.findMany({
-      where: { userId: validatedQuery.data.userId },
+      where: whereClause,
       include: {
         items: {
           include: {
@@ -48,7 +74,6 @@ export async function GET(req: NextRequest) {
       },
     });
 
-    // Format dữ liệu trả về
     const formattedOrders = orders.map((order) => ({
       ...order,
       items: order.items.map((item) => ({
@@ -74,7 +99,6 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
-    // Parse và validate request body
     const body = await req.json();
     const validatedData = createOrderSchema.safeParse(body);
 
@@ -87,7 +111,6 @@ export async function POST(req: NextRequest) {
 
     const { userId, name, paymentMethod, shippingMethod, address, phone } = validatedData.data;
 
-    // Lấy tất cả CartItem của user
     const cartItems = await prisma.cartItem.findMany({
       where: { userId },
       include: { product: true },
@@ -97,12 +120,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Cart is empty" }, { status: 400 });
     }
 
-    // Tính tổng giá tiền
     const totalPrice = cartItems.reduce((total, item) => {
       return total + item.product.price * item.quantity;
     }, 0);
 
-    // Tạo Order mới từ CartItem
     const order = await prisma.order.create({
       data: {
         userId,
@@ -129,7 +150,6 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    // Xóa CartItem sau khi tạo Order
     await prisma.cartItem.deleteMany({
       where: { userId },
     });

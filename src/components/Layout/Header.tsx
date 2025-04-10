@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
-import { Search, ShoppingBag, Menu, X, Heart, Sun, Moon, User, BarChart3 } from "lucide-react"
+import { Search, ShoppingBag, Menu, X, Sun, Moon, User, BarChart3, ShoppingBasket } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { useTheme } from "next-themes"
@@ -104,14 +104,20 @@ export default function Header() {
               <span className="sr-only">Tìm kiếm</span>
             </Button>
 
+            <Link href="/orders" passHref>
+              <Button variant="ghost" size="icon" className="relative">
+                <ShoppingBasket className="h-5 w-5" />
+                <span className="sr-only">Đơn hàng</span>
+              </Button>
+            </Link>
 
             <Link href="/cart" passHref>
               <Button variant="ghost" size="icon" className="relative">
                 <ShoppingBag className="h-5 w-5" />
                 <span className="sr-only">Giỏ hàng</span>
-                <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] font-medium text-primary-foreground">
+                {/* <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] font-medium text-primary-foreground">
                   0
-                </span>
+                </span> */}
               </Button>
             </Link>
 

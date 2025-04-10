@@ -23,13 +23,30 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 
+interface CartItem {
+  id: string;
+  productId: string;
+  quantity: number;
+  color?: string;
+  size?: string;
+  product?: { name: string; price: number; image?: string };
+  imageUrl?: string;
+}
+
+interface Location {
+  code: string;
+  name: string;
+  districts?: Location[];
+  wards?: Location[];
+}
 
 export default function CartClient() {
   const { userId, isLoaded } = useAuth();
-  const [cartItems, setCartItems] = useState<any[]>([]);
+  const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [paymentMethod, setPaymentMethod] = useState<string | null>(null);
+  const [shippingMethod, setShippingMethod] = useState<string | undefined>(undefined);
   const [orderLoading, setOrderLoading] = useState(false);
   const [isCheckoutDialogOpen, setIsCheckoutDialogOpen] = useState(false);
   const [recipientName, setRecipientName] = useState<string>("");
@@ -37,17 +54,16 @@ export default function CartClient() {
   const [district, setDistrict] = useState<string>("");
   const [ward, setWard] = useState<string>("");
   const [street, setStreet] = useState<string>("");
-  const [provinces, setProvinces] = useState<any[]>([]);
-  const [districts, setDistricts] = useState<any[]>([]);
-  const [wards, setWards] = useState<any[]>([]);
+  const [provinces, setProvinces] = useState<Location[]>([]);
+  const [districts, setDistricts] = useState<Location[]>([]);
+  const [wards, setWards] = useState<Location[]>([]);
   const [phone, setPhone] = useState<string>("");
 
-  // Lấy danh sách tỉnh/thành phố khi component mount
   useEffect(() => {
     const fetchProvinces = async () => {
       try {
         const response = await fetch("https://provinces.open-api.vn/api/p/");
-        const data = await response.json();
+        const data: Location[] = await response.json();
         setProvinces(data);
       } catch (err) {
         console.error("Lỗi khi lấy danh sách tỉnh/thành phố:", err);
@@ -56,7 +72,6 @@ export default function CartClient() {
     fetchProvinces();
   }, []);
 
-  // Lấy danh sách quận/huyện khi chọn tỉnh/thành phố
   useEffect(() => {
     if (province) {
       const fetchDistricts = async () => {
@@ -64,10 +79,10 @@ export default function CartClient() {
           const response = await fetch(
             `https://provinces.open-api.vn/api/p/${province}?depth=2`
           );
-          const data = await response.json();
+          const data: Location & { districts: Location[] } = await response.json();
           setDistricts(data.districts);
-          setDistrict(""); // Reset quận/huyện khi thay đổi tỉnh
-          setWards([]); // Reset xã/phường
+          setDistrict("");
+          setWards([]);
           setWard("");
         } catch (err) {
           console.error("Lỗi khi lấy danh sách quận/huyện:", err);
@@ -77,7 +92,6 @@ export default function CartClient() {
     }
   }, [province]);
 
-  // Lấy danh sách xã/phường khi chọn quận/huyện
   useEffect(() => {
     if (district) {
       const fetchWards = async () => {
@@ -85,9 +99,9 @@ export default function CartClient() {
           const response = await fetch(
             `https://provinces.open-api.vn/api/d/${district}?depth=2`
           );
-          const data = await response.json();
+          const data: Location & { wards: Location[] } = await response.json();
           setWards(data.wards);
-          setWard(""); // Reset xã/phường khi thay đổi quận/huyện
+          setWard("");
         } catch (err) {
           console.error("Lỗi khi lấy danh sách xã/phường:", err);
         }
@@ -105,13 +119,11 @@ export default function CartClient() {
 
     try {
       const cartResponse = await fetch(`/api/cart?userId=${userId}`);
-      if (!cartResponse.ok) {
-        throw new Error("Không thể tải giỏ hàng");
-      }
-      const cartData = await cartResponse.json();
+      if (!cartResponse.ok) throw new Error("Không thể tải giỏ hàng");
+      const cartData: CartItem[] = await cartResponse.json();
 
       const updatedItems = await Promise.all(
-        cartData.map(async (item: any) => {
+        cartData.map(async (item) => {
           let imageUrl = null;
           if (item.productId) {
             try {
@@ -151,15 +163,11 @@ export default function CartClient() {
     try {
       const response = await fetch(`/api/cart/${id}`, {
         method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ quantity: validQuantity }),
       });
 
-      if (!response.ok) {
-        throw new Error("Không thể cập nhật số lượng");
-      }
+      if (!response.ok) throw new Error("Không thể cập nhật số lượng");
 
       setCartItems((prevItems) =>
         prevItems.map((item) =>
@@ -173,13 +181,8 @@ export default function CartClient() {
 
   const handleRemoveItem = async (id: string) => {
     try {
-      const response = await fetch(`/api/cart/${id}`, {
-        method: "DELETE",
-      });
-
-      if (!response.ok) {
-        throw new Error("Không thể xóa sản phẩm");
-      }
+      const response = await fetch(`/api/cart/${id}`, { method: "DELETE" });
+      if (!response.ok) throw new Error("Không thể xóa sản phẩm");
 
       setCartItems((prevItems) => prevItems.filter((item) => item.id !== id));
     } catch (error) {
@@ -209,27 +212,34 @@ export default function CartClient() {
       setError("Vui lòng nhập đầy đủ thông tin địa chỉ");
       return;
     }
+    if (!phone) {
+      setError("Vui lòng nhập số điện thoại");
+      return;
+    }
+    if (!shippingMethod) {
+      setError("Vui lòng chọn phương thức giao hàng");
+      return;
+    }
 
-    const fullAddress = `${street}, ${wards.find(w => w.code === ward)?.name}, ${districts.find(d => d.code === district)?.name}, ${provinces.find(p => p.code === province)?.name}`;
+    const fullAddress = `${street}, ${wards.find((w) => w.code === ward)?.name}, ${districts.find((d) => d.code === district)?.name}, ${provinces.find((p) => p.code === province)?.name}`;
 
     setOrderLoading(true);
     try {
-      const response = await fetch("/api/orders", {
+      const orderResponse = await fetch("/api/orders", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           userId,
           paymentMethod,
+          shippingMethod,
           address: fullAddress,
           name: recipientName,
-          phone: phone,
+          phone,
         }),
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
+      if (!orderResponse.ok) {
+        const errorData = await orderResponse.json();
         const errorMessage =
           typeof errorData.error === "string"
             ? errorData.error
@@ -237,21 +247,40 @@ export default function CartClient() {
         throw new Error(errorMessage);
       }
 
-      const order = await response.json();
-      setCartItems([]);
-      setIsCheckoutDialogOpen(false);
-      toast.success("Thành công", {
-        description: "Đơn hàng đã được đặt thành công!",
-        action: {
-          label: "Xem tất cả đơn hàng",
-          onClick: () => window.location.href = "/checkout",
-        },
-      });
+      const order = await orderResponse.json();
+
+      if (paymentMethod === "vnpay") {
+        // Gọi API tạo URL thanh toán VNPAY
+        const paymentResponse = await fetch("/api/create_payment_url", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            amount: total,
+            bankCode: "",
+            orderDescription: `Thanh toán đơn hàng ${order.orderId || "DH" + Date.now()}`,
+            orderType: "250000",
+            language: "vn",
+          }),
+        });
+
+        if (!paymentResponse.ok) {
+          throw new Error("Không thể tạo URL thanh toán VNPAY");
+        }
+
+        const paymentData = await paymentResponse.json();
+        setCartItems([]);
+        setIsCheckoutDialogOpen(false);
+        window.location.href = paymentData.paymentUrl;
+      } else {
+        // Thanh toán bằng tiền mặt
+        setCartItems([]);
+        setIsCheckoutDialogOpen(false);
+        toast.success("Đơn hàng đã được tạo thành công!");
+        window.location.href = "/checkout";
+      }
     } catch (error) {
       console.error("Lỗi khi tạo đơn hàng:", error);
-      setError(
-        error instanceof Error ? error.message : "Đã xảy ra lỗi khi thanh toán"
-      );
+      setError(error instanceof Error ? error.message : "Đã xảy ra lỗi khi thanh toán");
     } finally {
       setOrderLoading(false);
     }
@@ -438,8 +467,7 @@ export default function CartClient() {
                       className="hidden"
                     />
                     <div
-                      className={`h-6 w-20 rounded cursor-pointer ${paymentMethod === "cash" ? "bg-primary text-primary-foreground" : "bg-muted"
-                        } flex items-center justify-center`}
+                      className={`h-6 w-20 rounded cursor-pointer ${paymentMethod === "cash" ? "bg-primary text-primary-foreground" : "bg-muted"} flex items-center justify-center`}
                     >
                       Tiền mặt
                     </div>
@@ -454,8 +482,7 @@ export default function CartClient() {
                       className="hidden"
                     />
                     <div
-                      className={`h-6 w-20 rounded cursor-pointer ${paymentMethod === "vnpay" ? "bg-primary text-primary-foreground" : "bg-muted"
-                        } flex items-center justify-center`}
+                      className={`h-6 w-20 rounded cursor-pointer ${paymentMethod === "vnpay" ? "bg-primary text-primary-foreground" : "bg-muted"} flex items-center justify-center`}
                     >
                       VNPay
                     </div>
@@ -589,10 +616,10 @@ export default function CartClient() {
               />
             </div>
             <div>
-              <label htmlFor="phone" className="block text-sm font-medium mb-1">
+              <label htmlFor="shippingMethod" className="block text-sm font-medium mb-1">
                 Phương thức giao hàng
               </label>
-              <Select onValueChange={(value) => console.log(value)}>
+              <Select onValueChange={(value) => setShippingMethod(value)} value={shippingMethod}>
                 <SelectTrigger>
                   <SelectValue placeholder="Chọn phương thức giao hàng" />
                 </SelectTrigger>
@@ -612,10 +639,7 @@ export default function CartClient() {
             >
               Hủy
             </Button>
-            <Button
-              onClick={handleConfirmCheckout}
-              disabled={orderLoading}
-            >
+            <Button onClick={handleConfirmCheckout} disabled={orderLoading}>
               {orderLoading ? "Đang xử lý..." : "Xác nhận"}
             </Button>
           </DialogFooter>
