@@ -22,6 +22,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
+import { formatPrice } from "@/lib/formatPrice";
 
 interface CartItem {
   id: string;
@@ -199,99 +200,100 @@ export default function CartClient() {
     setIsCheckoutDialogOpen(true);
   };
 
-  const handleConfirmCheckout = async () => {
-    if (!paymentMethod) {
-      setError("Vui lòng chọn phương thức thanh toán");
-      return;
-    }
-    if (!recipientName) {
-      setError("Vui lòng nhập tên người nhận");
-      return;
-    }
-    if (!province || !district || !ward || !street) {
-      setError("Vui lòng nhập đầy đủ thông tin địa chỉ");
-      return;
-    }
-    if (!phone) {
-      setError("Vui lòng nhập số điện thoại");
-      return;
-    }
-    if (!shippingMethod) {
-      setError("Vui lòng chọn phương thức giao hàng");
-      return;
+const handleConfirmCheckout = async () => {
+  if (!paymentMethod) {
+    setError("Vui lòng chọn phương thức thanh toán");
+    return;
+  }
+  if (!recipientName) {
+    setError("Vui lòng nhập tên người nhận");
+    return;
+  }
+  if (!province || !district || !ward || !street) {
+    setError("Vui lòng nhập đầy đủ thông tin địa chỉ");
+    return;
+  }
+  if (!phone) {
+    setError("Vui lòng nhập số điện thoại");
+    return;
+  }
+  if (!shippingMethod) {
+    setError("Vui lòng chọn phương thức giao hàng");
+    return;
+  }
+
+  const fullAddress = `${street}, ${wards.find((w) => w.code === ward)?.name}, ${districts.find((d) => d.code === district)?.name}, ${provinces.find((p) => p.code === province)?.name}`;
+
+  setOrderLoading(true);
+  try {
+    const orderResponse = await fetch("/api/orders", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        userId,
+        paymentMethod,
+        shippingMethod,
+        address: fullAddress,
+        name: recipientName,
+        phone,
+        items: cartItems.map((item) => ({
+          productId: item.productId,
+          quantity: item.quantity,
+          price: item.product?.price || 0,
+          color: item.color,
+          size: item.size,
+        })),
+        total,
+        status: paymentMethod === "vnpay" ? "awaiting_payment" : "pending",
+      }),
+    });
+
+    if (!orderResponse.ok) {
+      const errorData = await orderResponse.json();
+      const errorMessage =
+        typeof errorData.error === "string"
+          ? errorData.error
+          : errorData.error?.message || JSON.stringify(errorData.error) || "Không thể tạo đơn hàng";
+      throw new Error(errorMessage);
     }
 
-    const fullAddress = `${street}, ${wards.find((w) => w.code === ward)?.name}, ${districts.find((d) => d.code === district)?.name}, ${provinces.find((p) => p.code === province)?.name}`;
+    const order = await orderResponse.json();
 
-    setOrderLoading(true);
-    try {
-      const orderResponse = await fetch("/api/orders", {
+    if (paymentMethod === "vnpay") {
+      // Gọi API tạo URL thanh toán VNPAY
+      const paymentResponse = await fetch("/api/create_payment_url", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          userId,
-          paymentMethod,
-          shippingMethod,
-          address: fullAddress,
-          name: recipientName,
-          phone,
+          amount: total,
+          bankCode: "",
+          orderDescription: `Thanh toán đơn hàng ${order.orderId || "DH" + Date.now()}`,
+          orderType: "250000",
+          language: "vn",
         }),
       });
 
-      if (!orderResponse.ok) {
-        const errorData = await orderResponse.json();
-        const errorMessage =
-          typeof errorData.error === "string"
-            ? errorData.error
-            : errorData.error?.message || JSON.stringify(errorData.error) || "Không thể tạo đơn hàng";
-        throw new Error(errorMessage);
+      if (!paymentResponse.ok) {
+        throw new Error("Không thể tạo URL thanh toán VNPAY");
       }
 
-      const order = await orderResponse.json();
-
-      if (paymentMethod === "vnpay") {
-        // Gọi API tạo URL thanh toán VNPAY
-        const paymentResponse = await fetch("/api/create_payment_url", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            amount: total,
-            bankCode: "",
-            orderDescription: `Thanh toán đơn hàng ${order.orderId || "DH" + Date.now()}`,
-            orderType: "250000",
-            language: "vn",
-          }),
-        });
-
-        if (!paymentResponse.ok) {
-          throw new Error("Không thể tạo URL thanh toán VNPAY");
-        }
-
-        const paymentData = await paymentResponse.json();
-        setCartItems([]);
-        setIsCheckoutDialogOpen(false);
-        window.location.href = paymentData.paymentUrl;
-      } else {
-        // Thanh toán bằng tiền mặt
-        setCartItems([]);
-        setIsCheckoutDialogOpen(false);
-        toast.success("Đơn hàng đã được tạo thành công!");
-        window.location.href = "/checkout";
-      }
-    } catch (error) {
-      console.error("Lỗi khi tạo đơn hàng:", error);
-      setError(error instanceof Error ? error.message : "Đã xảy ra lỗi khi thanh toán");
-    } finally {
-      setOrderLoading(false);
+      const paymentData = await paymentResponse.json();
+      setIsCheckoutDialogOpen(false);
+      window.location.href = paymentData.paymentUrl;
+    } else {
+      // Thanh toán bằng tiền mặt
+      setCartItems([]); // Xóa giỏ hàng chỉ khi thanh toán tiền mặt
+      setIsCheckoutDialogOpen(false);
+      toast.success("Đơn hàng đã được tạo thành công!");
+      window.location.href = "/checkout";
     }
-  };
-
-  const formatPrice = (price: number) =>
-    new Intl.NumberFormat("vi-VN", {
-      style: "currency",
-      currency: "VND",
-      minimumFractionDigits: 0,
-    }).format(price);
+  } catch (error) {
+    console.error("Lỗi khi tạo đơn hàng:", error);
+    setError(error instanceof Error ? error.message : "Đã xảy ra lỗi khi thanh toán");
+  } finally {
+    setOrderLoading(false);
+  }
+};
 
   const subtotal = cartItems.reduce(
     (total, item) => total + (item.product?.price || 0) * item.quantity,

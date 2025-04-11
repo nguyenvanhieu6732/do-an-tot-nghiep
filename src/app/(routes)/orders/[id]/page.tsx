@@ -25,6 +25,7 @@ import {
 import { toast } from "sonner";
 import Link from "next/link";
 import Loading from "../../loading";
+import { formatPrice } from "@/lib/formatPrice";
 
 export default function OrderDetailPage({ params: paramsPromise }: { params: Promise<{ id: string }> }) {
   const params = React.use(paramsPromise);
@@ -123,16 +124,6 @@ export default function OrderDetailPage({ params: paramsPromise }: { params: Pro
     }
   }, [isLoaded, userId, params.id]);
 
-  const formatPrice = (price: number | undefined | null) => {
-    if (price === undefined || price === null || isNaN(price)) {
-      return "Không xác định";
-    }
-    return new Intl.NumberFormat("vi-VN", {
-      style: "currency",
-      currency: "VND",
-      minimumFractionDigits: 0,
-    }).format(price);
-  };
 
   if (!isLoaded || loading) return <Loading />;
 
@@ -168,7 +159,7 @@ export default function OrderDetailPage({ params: paramsPromise }: { params: Pro
               {new Date(order.createdAt).toLocaleDateString("vi-VN")}
             </p>
             <p>
-              <strong>Tổng tiền:</strong> {formatPrice(order.totalPrice)}
+              <strong>Tổng tiền:</strong> {formatPrice(order.totalPrice + 30000)}
             </p>
             <p>
               <strong>Trạng thái:</strong>{" "}
@@ -252,7 +243,7 @@ export default function OrderDetailPage({ params: paramsPromise }: { params: Pro
                 <TableCell>{formatPrice(item.product.price)}</TableCell>
                 <TableCell>{item.color || "Không có"}</TableCell>
                 <TableCell>{item.size || "Không có"}</TableCell>
-                <TableCell>{formatPrice(item.product.price * item.quantity)}</TableCell>
+                <TableCell>{formatPrice(item.product.price * item.quantity + 30000)}</TableCell>
               </TableRow>
             ))}
           </TableBody>

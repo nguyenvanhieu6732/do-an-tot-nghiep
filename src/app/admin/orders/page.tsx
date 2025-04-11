@@ -25,6 +25,7 @@ import {
 import { toast } from "sonner";
 import Link from "next/link";
 import Loading from "../../(routes)/loading";
+import { formatPrice } from "@/lib/formatPrice";
 
 interface OrderItem {
   id: string;
@@ -131,17 +132,6 @@ export default function AdminOrdersPage() {
     }
   }, [userId, isLoaded]);
 
-  const formatPrice = (price: number | undefined | null): string => {
-    if (price === undefined || price === null || isNaN(price)) {
-      return "Không xác định";
-    }
-    return new Intl.NumberFormat("vi-VN", {
-      style: "currency",
-      currency: "VND",
-      minimumFractionDigits: 0,
-    }).format(price);
-  };
-
   if (!isLoaded || loading) return <Loading />;
 
   if (error) {
@@ -193,7 +183,7 @@ export default function AdminOrdersPage() {
                 <TableCell>
                   {new Date(order.createdAt).toLocaleDateString("vi-VN")}
                 </TableCell>
-                <TableCell>{formatPrice(order.totalPrice)}</TableCell>
+                <TableCell>{formatPrice(order.totalPrice + 30000)}</TableCell>
                 <TableCell>
                   <span
                     className={

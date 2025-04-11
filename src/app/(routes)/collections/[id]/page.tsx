@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { formatPrice } from "@/lib/formatPrice";
 
 // Dữ liệu giả lập cho các bộ sưu tập
 const collections = [
@@ -150,22 +151,12 @@ export default async function CollectionDetailPage({ params }: { params: { id: s
   // Tìm bộ sưu tập theo id
   const collection = collections.find((c) => c.id === Number(resolvedParams.id));
 
-  // Nếu không tìm thấy, trả về trang 404
   if (!collection) {
     notFound();
   }
 
-  // Lấy danh sách sản phẩm của bộ sưu tập
   const collectionProducts = products.filter((product) => collection.products.includes(product.id));
 
-  // Format giá
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat("vi-VN", {
-      style: "currency",
-      currency: "VND",
-      minimumFractionDigits: 0,
-    }).format(price);
-  };
 
   // Format ngày
   const formatDate = (dateString: string) => {

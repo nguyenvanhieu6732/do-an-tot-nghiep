@@ -14,6 +14,7 @@ import {
 import { toast } from "sonner";
 import Link from "next/link";
 import Loading from "../loading";
+import { formatPrice } from "@/lib/formatPrice";
 
 export default function OrdersPage() {
     const { userId, isLoaded } = useAuth(); // Thêm isLoaded để kiểm tra trạng thái xác thực
@@ -53,16 +54,6 @@ export default function OrdersPage() {
         }
     }, [userId, isLoaded]);
 
-    const formatPrice = (price: number | undefined | null) => {
-        if (price === undefined || price === null || isNaN(price)) {
-            return "Không xác định";
-        }
-        return new Intl.NumberFormat("vi-VN", {
-            style: "currency",
-            currency: "VND",
-            minimumFractionDigits: 0,
-        }).format(price);
-    };
 
     // Hiển thị loading khi Clerk chưa tải xong
     if (!isLoaded || loading) return <Loading />;
@@ -112,7 +103,7 @@ export default function OrdersPage() {
                                 <TableCell>
                                     {new Date(order.createdAt).toLocaleDateString("vi-VN")}
                                 </TableCell>
-                                <TableCell>{formatPrice(order.totalPrice)}</TableCell>
+                                <TableCell>{formatPrice(order.totalPrice + 30000)}</TableCell>
                                 <TableCell>
                                     <span
                                         className={

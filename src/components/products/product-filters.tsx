@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Slider } from "@/components/ui/slider"
 import { ChevronDown, ChevronUp, Filter } from "lucide-react"
+import { formatPrice } from "@/lib/formatPrice"
 
 const categories = [
   { id: "shirts", label: "Áo" },
@@ -49,13 +50,6 @@ export default function ProductFilters() {
     })
   }
 
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat("vi-VN", {
-      style: "currency",
-      currency: "VND",
-      minimumFractionDigits: 0,
-    }).format(price)
-  }
 
   return (
     <div className="sticky top-20">

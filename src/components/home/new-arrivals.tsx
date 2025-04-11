@@ -8,6 +8,7 @@ import { ChevronLeft, ChevronRight, ShoppingBag } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
+import { formatPrice } from "@/lib/formatPrice"
 
 const products = [
   {
@@ -57,13 +58,6 @@ const products = [
 export default function NewArrivals() {
   const [hoveredProduct, setHoveredProduct] = useState<number | null>(null)
 
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat("vi-VN", {
-      style: "currency",
-      currency: "VND",
-      minimumFractionDigits: 0,
-    }).format(price)
-  }
 
   return (
     <section className="bg-muted py-16">

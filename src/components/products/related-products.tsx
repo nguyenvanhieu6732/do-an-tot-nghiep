@@ -7,6 +7,7 @@ import { motion } from "framer-motion"
 import { Heart, ShoppingBag } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
+import { formatPrice } from "@/lib/formatPrice"
 
 interface RelatedProductsProps {
   categoryId: string
@@ -26,13 +27,6 @@ export default function RelatedProducts({ categoryId, currentProductId }: Relate
     link: `/products/related-product-${i + 1}`,
   }))
 
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat("vi-VN", {
-      style: "currency",
-      currency: "VND",
-      minimumFractionDigits: 0,
-    }).format(price)
-  }
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">

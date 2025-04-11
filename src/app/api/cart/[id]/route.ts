@@ -3,7 +3,6 @@ import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
-// Cập nhật số lượng CartItem
 export async function PUT(
   req: NextRequest,
   context: { params: Promise<{ id: string }> | { id: string } }
@@ -37,7 +36,6 @@ export async function PUT(
   }
 }
 
-// Xóa CartItem
 export async function DELETE(
   req: NextRequest,
   context: { params: Promise<{ id: string }> | { id: string } }

@@ -23,6 +23,7 @@ import ProductReviews from "@/components/products/product-reviews";
 import NotFound from "@/app/not-found";
 import Loading from "../../loading";
 import { useAuth } from "@clerk/nextjs";
+import { formatPrice } from "@/lib/formatPrice";
 
 export default function ProductDetailPage({ params: paramsPromise }: { params: Promise<{ id: string }> }) {
   const params = React.use(paramsPromise);
@@ -61,9 +62,7 @@ export default function ProductDetailPage({ params: paramsPromise }: { params: P
     }
   }, [params.id]);
 
-  const formatPrice = (price: number) =>
-    new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND", minimumFractionDigits: 0 }).format(price);
-
+  
   if (loading) return <Loading />;
   if (error || !product) return <NotFound />;
 

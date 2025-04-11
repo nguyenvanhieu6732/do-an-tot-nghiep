@@ -15,6 +15,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { formatPrice } from "@/lib/formatPrice";
 
 // Định nghĩa interface cho Product
 interface Product {
@@ -80,13 +81,6 @@ export default function ProductList({ sort: initialSort }: { sort?: string | nul
     setCurrentPage(1); // Reset về trang 1 khi thay đổi sắp xếp
   };
 
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat("vi-VN", {
-      style: "currency",
-      currency: "VND",
-      minimumFractionDigits: 0,
-    }).format(price);
-  };
 
   const handlePrevious = () => {
     if (currentPage > 1) {

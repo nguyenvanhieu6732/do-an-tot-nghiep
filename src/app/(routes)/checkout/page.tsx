@@ -16,7 +16,6 @@ export default function CheckoutSuccessPage() {
         </div>
         <h1 className="text-3xl font-bold mb-2">Cảm ơn bạn đã đặt hàng!</h1>
         <p className="text-muted-foreground text-lg">Đơn hàng đã được đặt thành công.</p>
-        <p className="text-muted-foreground">Email xác nhận đã được gửi đến địa chỉ email của bạn.</p>
       </div>
 
       {/* Các nút điều hướng */}

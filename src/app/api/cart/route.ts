@@ -61,7 +61,6 @@ export async function POST(req: NextRequest) {
   }
 }
 
-// Lấy giỏ hàng của user
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const userId = searchParams.get("userId");
